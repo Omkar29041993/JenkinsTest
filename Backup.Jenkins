@@ -1,0 +1,31 @@
+node {
+   def test1_buildid
+   stage ('clone')
+   {
+        dir ('build'){
+            git credentialsId: 'Git-Credentials', url: 'https://github.com/Omkar29041993/JenkinsTest.git'
+        }
+   }
+   stage ('Replacing the testbuild-id')
+   {
+        dir ('build'){
+            sh label: '', script: '''cat build.yml
+                yq r build.yml test1_buildid
+                buildid=$(( $buildid + 1 ))
+                echo $buildid
+                yq w -i build.yml "test1_buildid" "$buildid"
+                cat build.yml'''
+        }          
+   }
+   stage ('git push'){
+       dir ('build'){
+           withCredentials([usernamePassword(credentialsId: 'Git-Credentials', usernameVariable: 'username', passwordVariable: 'password')]){
+                sh 'git config --global user.email "omkar.tirodkar@gmail.com"'
+                sh 'git config --global user.name "omkar29041993"'
+                sh "git add ."
+                sh 'git commit -m "modified"'
+                sh("git push http://$username:$password@github.com/Omkar29041993/JenkinsTest")
+            }
+       }
+   }
+}
